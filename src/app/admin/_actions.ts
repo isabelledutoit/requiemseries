@@ -59,6 +59,59 @@ export async function createArtworkAction(input: NewArtworkInput) {
   return { id };
 }
 
+export type UpdateArtworkInput = {
+  title: string;
+  description?: string;
+  medium?: string;
+  year?: string;
+  dimensions?: string;
+};
+
+export async function updateArtworkAction(id: string, fields: UpdateArtworkInput) {
+  await requireAdmin();
+  const title = fields.title?.trim();
+  if (!title) throw new Error("Title is required.");
+  await db
+    .update(portfolioArtwork)
+    .set({
+      title,
+      description: fields.description?.trim() || null,
+      medium: fields.medium?.trim() || null,
+      year: fields.year?.trim() || null,
+      dimensions: fields.dimensions?.trim() || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(portfolioArtwork.id, id));
+  revalidatePath("/portfolio");
+  revalidatePath("/admin");
+}
+
+// Append more images to an existing artwork (Isabelle's full view + details).
+export async function addImagesToArtworkAction(
+  artworkId: string,
+  images: NewArtworkImage[],
+) {
+  await requireAdmin();
+  if (!images?.length) return;
+  const [{ maxPos }] = await db
+    .select({ maxPos: sql<number | null>`max(${portfolioImage.position})` })
+    .from(portfolioImage)
+    .where(eq(portfolioImage.artworkId, artworkId));
+  const start = (maxPos ?? -1) + 1;
+  await db.insert(portfolioImage).values(
+    images.map((im, idx) => ({
+      id: nanoid(),
+      artworkId,
+      imageUrl: im.url,
+      imagePathname: im.pathname,
+      altText: im.alt?.trim() || null,
+      position: start + idx,
+    })),
+  );
+  revalidatePath("/portfolio");
+  revalidatePath("/admin");
+}
+
 export async function deleteArtworkAction(id: string) {
   await requireAdmin();
   const imgs = await db

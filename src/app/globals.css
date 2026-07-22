@@ -82,13 +82,13 @@ a {
 }
 .auth-field input {
   font-family: inherit;
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: var(--bone);
   background: var(--dark);
   border: 1px solid var(--brown-mid);
   border-radius: 3px;
-  padding: 0.7rem 0.9rem;
-  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  min-height: 42px;
 }
 .auth-field input:focus-visible {
   outline: none;
@@ -215,20 +215,21 @@ a {
 }
 .art-form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 7rem;
   gap: 1rem;
 }
-.art-form textarea {
+.auth-field textarea {
   font-family: inherit;
   font-size: 1rem;
   color: var(--bone);
   background: var(--dark);
   border: 1px solid var(--brown-mid);
   border-radius: 3px;
-  padding: 0.7rem 0.9rem;
+  padding: 0.55rem 0.8rem;
   resize: vertical;
+  line-height: 1.5;
 }
-.art-form textarea:focus-visible {
+.auth-field textarea:focus-visible {
   outline: none;
   border-color: var(--blood-bright);
 }
@@ -243,27 +244,39 @@ a {
 }
 
 /* Artwork list */
+.admin-works {
+  min-width: 0;
+}
 .art-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.7rem;
+  max-width: 34rem;
 }
 .art-list-item {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
   background: var(--dark-mid);
   border: 1px solid var(--brown);
   border-radius: 3px;
-  padding: 0.6rem 0.9rem;
+  padding: 0.7rem 0.9rem;
+}
+.art-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
 }
 .art-thumb {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   object-fit: cover;
   border-radius: 2px;
   flex-shrink: 0;
+}
+.art-thumb-empty {
+  background: var(--dark);
+  border: 1px solid var(--brown);
 }
 .art-list-meta {
   display: flex;
@@ -275,26 +288,92 @@ a {
 .art-list-title {
   color: var(--bone);
   font-size: 1.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .art-list-sub {
   color: var(--bone-faint);
   font-size: 0.8rem;
   letter-spacing: 0.06em;
 }
-.art-del {
+.art-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+/* Consistent card action buttons — identical size/shape (Edit, Add images,
+   Delete). Only the hover accent differs; Delete carries the danger color. */
+.art-edit,
+.art-add,
+.art-del,
+.art-save,
+.art-cancel {
   font-family: inherit;
-  color: var(--blood-bright);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 0.9rem;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.art-edit,
+.art-add,
+.art-del,
+.art-cancel {
   background: none;
   border: 1px solid var(--brown-mid);
-  border-radius: 3px;
-  padding: 0.4rem 0.8rem;
-  min-height: 40px;
-  cursor: pointer;
-  letter-spacing: 0.06em;
+  color: var(--bone-dim);
 }
-.art-del:hover {
-  border-color: var(--blood-bright);
+.art-edit:hover:not(:disabled),
+.art-add:hover:not(:disabled),
+.art-cancel:hover:not(:disabled) {
+  border-color: var(--gold);
   color: var(--bone);
+}
+.art-del:hover:not(:disabled) {
+  border-color: var(--blood-bright);
+  color: var(--blood-bright);
+}
+/* Save = primary (matches the blood Create button, one tier down in size). */
+.art-save {
+  background: var(--blood);
+  border: 1px solid var(--blood);
+  color: var(--bone);
+}
+.art-save:hover:not(:disabled) {
+  background: var(--blood-mid);
+  border-color: var(--blood-mid);
+}
+.art-edit:disabled,
+.art-add:disabled,
+.art-del:disabled,
+.art-save:disabled,
+.art-cancel:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.art-form-hint {
+  font-size: 0.85rem;
+  color: var(--bone-faint);
+  line-height: 1.6;
+}
+.art-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--brown);
+}
+.art-edit-actions {
+  display: flex;
+  gap: 0.6rem;
 }
 
 /* ── Portfolio (public) ── */
@@ -362,7 +441,7 @@ a {
   color: var(--bone-dim);
   font-size: 1.15rem;
   line-height: 1.7;
-  max-width: 46ch;
+  max-width: 68ch;
   margin: 1.4rem auto 0;
 }
 .pf-stage-wrap {

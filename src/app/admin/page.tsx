@@ -28,6 +28,10 @@ export default async function AdminPage() {
         artworks={artworks.map((a) => ({
           id: a.id,
           title: a.title,
+          description: a.description ?? "",
+          medium: a.medium ?? "",
+          year: a.year ?? "",
+          dimensions: a.dimensions ?? "",
           published: a.published,
           imageCount: a.images.length,
           coverUrl: a.images[0]?.imageUrl ?? null,

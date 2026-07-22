@@ -1,32 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { artworkImagePathname } from "@/lib/blob";
-import { createArtworkAction, deleteArtworkAction } from "./_actions";
+import {
+  createArtworkAction,
+  addImagesToArtworkAction,
+  updateArtworkAction,
+  deleteArtworkAction,
+} from "./_actions";
+
+const DEFAULT_MEDIUM = "Oil on canvas";
+const DIMENSIONS_PLACEHOLDER = "36 x 48 in";
 
 type ArtworkRow = {
   id: string;
   title: string;
+  description: string;
+  medium: string;
+  year: string;
+  dimensions: string;
   published: boolean;
   imageCount: number;
   coverUrl: string | null;
 };
 
+async function uploadOne(file: File) {
+  const res = await upload(artworkImagePathname(file.name), file, {
+    access: "public",
+    handleUploadUrl: "/api/portfolio/upload",
+    multipart: true,
+  });
+  return { url: res.url, pathname: res.pathname };
+}
+
 export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
-  const [medium, setMedium] = useState("");
+  const [medium, setMedium] = useState(DEFAULT_MEDIUM);
   const [year, setYear] = useState("");
   const [dimensions, setDimensions] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function submit(e: React.FormEvent) {
+  async function createArtwork(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
     if (!title.trim()) return setErr("Title is required.");
@@ -35,30 +57,20 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
     try {
       const images: { url: string; pathname: string }[] = [];
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
         setStatus(`Uploading ${i + 1} of ${files.length}…`);
-        const result = await upload(artworkImagePathname(file.name), file, {
-          access: "public",
-          handleUploadUrl: "/api/portfolio/upload",
-          multipart: true,
-        });
-        images.push({ url: result.url, pathname: result.pathname });
+        images.push(await uploadOne(files[i]));
       }
       setStatus("Saving…");
-      await createArtworkAction({
-        title,
-        medium,
-        year,
-        dimensions,
-        description,
-        images,
-      });
+      await createArtworkAction({ title, medium, year, dimensions, description, images });
+      // Only NOW clear — an actual new artwork was created. Medium resets to
+      // its default (Isabelle's usual), not blank.
       setTitle("");
-      setMedium("");
+      setMedium(DEFAULT_MEDIUM);
       setYear("");
       setDimensions("");
       setDescription("");
       setFiles([]);
+      if (fileRef.current) fileRef.current.value = "";
       setStatus(null);
       router.refresh();
     } catch (e) {
@@ -69,18 +81,11 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
     }
   }
 
-  async function remove(id: string, title: string) {
-    if (!confirm(`Delete "${title}" and its images? This cannot be undone.`))
-      return;
-    await deleteArtworkAction(id);
-    router.refresh();
-  }
-
   return (
     <div className="admin-grid">
       <section className="admin-panel">
-        <h2 className="admin-subtitle">Add artwork</h2>
-        <form className="art-form" onSubmit={submit}>
+        <h2 className="admin-subtitle">New artwork</h2>
+        <form className="art-form" onSubmit={createArtwork}>
           <label className="auth-field">
             <span>Title *</span>
             <input value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -88,7 +93,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
           <div className="art-form-row">
             <label className="auth-field">
               <span>Medium</span>
-              <input value={medium} onChange={(e) => setMedium(e.target.value)} placeholder="Oil on canvas" />
+              <input value={medium} onChange={(e) => setMedium(e.target.value)} />
             </label>
             <label className="auth-field">
               <span>Year</span>
@@ -97,15 +102,20 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
           </div>
           <label className="auth-field">
             <span>Dimensions</span>
-            <input value={dimensions} onChange={(e) => setDimensions(e.target.value)} placeholder="91 x 121 cm" />
+            <input
+              value={dimensions}
+              onChange={(e) => setDimensions(e.target.value)}
+              placeholder={DIMENSIONS_PLACEHOLDER}
+            />
           </label>
           <label className="auth-field">
             <span>Description</span>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </label>
           <label className="auth-field">
-            <span>Images * (one artwork, many views)</span>
+            <span>Images * — full view + any detail shots</span>
             <input
+              ref={fileRef}
               type="file"
               accept="image/*"
               multiple
@@ -118,43 +128,184 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
           {err && <p className="auth-err">{err}</p>}
           {status && <p className="art-form-note">{status}</p>}
           <button type="submit" className="auth-btn" disabled={busy}>
-            {busy ? "Working…" : "Add artwork"}
+            {busy ? "Working…" : "Create new artwork"}
           </button>
+          <p className="art-form-hint">
+            Creating clears the form. To add more images to or edit a work you
+            already made, use its card →
+          </p>
         </form>
       </section>
 
-      <section className="admin-panel">
-        <h2 className="admin-subtitle">
-          Works ({artworks.length})
-        </h2>
+      <section className="admin-panel admin-works">
+        <h2 className="admin-subtitle">Works ({artworks.length})</h2>
         {artworks.length === 0 ? (
-          <p className="art-form-note">No artworks yet. Add your first above.</p>
+          <p className="art-form-note">No artworks yet. Add your first on the left.</p>
         ) : (
           <ul className="art-list">
             {artworks.map((a) => (
-              <li key={a.id} className="art-list-item">
-                {a.coverUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={a.coverUrl} alt="" className="art-thumb" />
-                )}
-                <div className="art-list-meta">
-                  <span className="art-list-title">{a.title}</span>
-                  <span className="art-list-sub">
-                    {a.imageCount} image(s){a.published ? "" : " · hidden"}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="art-del"
-                  onClick={() => remove(a.id, a.title)}
-                >
-                  Delete
-                </button>
-              </li>
+              <WorkCard key={a.id} art={a} />
             ))}
           </ul>
         )}
       </section>
     </div>
+  );
+}
+
+function WorkCard({ art }: { art: ArtworkRow }) {
+  const router = useRouter();
+  const addRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+
+  // Edit-form state, seeded from the artwork.
+  const [title, setTitle] = useState(art.title);
+  const [medium, setMedium] = useState(art.medium);
+  const [year, setYear] = useState(art.year);
+  const [dimensions, setDimensions] = useState(art.dimensions);
+  const [description, setDescription] = useState(art.description);
+  const [editErr, setEditErr] = useState<string | null>(null);
+
+  function openEdit() {
+    setTitle(art.title);
+    setMedium(art.medium);
+    setYear(art.year);
+    setDimensions(art.dimensions);
+    setDescription(art.description);
+    setEditErr(null);
+    setEditing(true);
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) return setEditErr("Title is required.");
+    setBusy("save");
+    try {
+      await updateArtworkAction(art.id, { title, medium, year, dimensions, description });
+      setEditing(false);
+      router.refresh();
+    } catch (e) {
+      setEditErr(e instanceof Error ? e.message : "Save failed.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onAddImages(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? []);
+    if (picked.length === 0) return;
+    setBusy("upload");
+    try {
+      const images: { url: string; pathname: string }[] = [];
+      for (const f of picked) images.push(await uploadOne(f));
+      await addImagesToArtworkAction(art.id, images);
+      if (addRef.current) addRef.current.value = "";
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onDelete() {
+    if (!confirm(`Delete "${art.title}" and its images? This cannot be undone.`)) return;
+    setBusy("delete");
+    try {
+      await deleteArtworkAction(art.id);
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <li className="art-list-item">
+      <div className="art-card-head">
+        {art.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={art.coverUrl} alt="" className="art-thumb" />
+        ) : (
+          <div className="art-thumb art-thumb-empty" />
+        )}
+        <div className="art-list-meta">
+          <span className="art-list-title">{art.title}</span>
+          <span className="art-list-sub">
+            {art.imageCount} image(s){art.published ? "" : " · hidden"}
+          </span>
+        </div>
+        <div className="art-card-actions">
+          <button
+            type="button"
+            className="art-edit"
+            onClick={() => (editing ? setEditing(false) : openEdit())}
+            disabled={busy !== null}
+          >
+            {editing ? "Close" : "Edit"}
+          </button>
+          <button
+            type="button"
+            className="art-add"
+            onClick={() => addRef.current?.click()}
+            disabled={busy !== null}
+          >
+            {busy === "upload" ? "Adding…" : "Add images"}
+          </button>
+          <button
+            type="button"
+            className="art-del"
+            onClick={onDelete}
+            disabled={busy !== null}
+          >
+            {busy === "delete" ? "…" : "Delete"}
+          </button>
+          <input ref={addRef} type="file" accept="image/*" multiple hidden onChange={onAddImages} />
+        </div>
+      </div>
+
+      {editing && (
+        <form className="art-edit-form" onSubmit={saveEdit}>
+          <label className="auth-field">
+            <span>Title *</span>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+          </label>
+          <div className="art-form-row">
+            <label className="auth-field">
+              <span>Medium</span>
+              <input value={medium} onChange={(e) => setMedium(e.target.value)} />
+            </label>
+            <label className="auth-field">
+              <span>Year</span>
+              <input value={year} onChange={(e) => setYear(e.target.value)} />
+            </label>
+          </div>
+          <label className="auth-field">
+            <span>Dimensions</span>
+            <input
+              value={dimensions}
+              onChange={(e) => setDimensions(e.target.value)}
+              placeholder={DIMENSIONS_PLACEHOLDER}
+            />
+          </label>
+          <label className="auth-field">
+            <span>Description</span>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+          </label>
+          {editErr && <p className="auth-err">{editErr}</p>}
+          <div className="art-edit-actions">
+            <button type="submit" className="art-save" disabled={busy !== null}>
+              {busy === "save" ? "Saving…" : "Save changes"}
+            </button>
+            <button
+              type="button"
+              className="art-cancel"
+              onClick={() => setEditing(false)}
+              disabled={busy !== null}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </li>
   );
 }
