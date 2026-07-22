@@ -376,6 +376,102 @@ a {
   gap: 0.6rem;
 }
 
+/* ── Dropzone ── */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 2rem 1rem;
+  border: 2px dashed var(--bone-faint);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.015);
+  color: var(--bone-dim);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--gold);
+  color: var(--bone);
+  outline: none;
+}
+.dropzone.is-over {
+  border-color: var(--blood-bright);
+  border-style: solid;
+  background: var(--dark-mid);
+  color: var(--bone);
+}
+.dropzone-icon {
+  color: var(--bone-faint);
+  transition: color 0.2s;
+}
+.dropzone:hover .dropzone-icon,
+.dropzone.is-over .dropzone-icon {
+  color: var(--gold);
+}
+.dropzone-main {
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+}
+.dropzone-main span {
+  color: var(--bone-faint);
+}
+.dropzone-hint {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bone-faint);
+}
+.dropzone-files {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.9rem;
+}
+.dropzone-files > span {
+  color: var(--gold);
+  letter-spacing: 0.06em;
+}
+.dropzone-clear {
+  font-family: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--bone-dim);
+  background: none;
+  border: 1px solid var(--brown-mid);
+  border-radius: 3px;
+  padding: 0.25rem 0.6rem;
+  min-height: 32px;
+  cursor: pointer;
+}
+.dropzone-clear:hover {
+  border-color: var(--blood-bright);
+  color: var(--blood-bright);
+}
+
+/* ── Tooltip (Radix) ── */
+.tip {
+  background: var(--dark-mid);
+  color: var(--bone);
+  border: 1px solid var(--brown-mid);
+  font-family: "Patrick Hand", cursive;
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  padding: 0.4rem 0.7rem;
+  border-radius: 3px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  -webkit-user-select: none;
+  user-select: none;
+  max-width: 16rem;
+  z-index: 2000;
+}
+.tip-arrow {
+  fill: var(--dark-mid);
+}
+
 /* ── Portfolio (public) ── */
 .pf-wrap {
   max-width: 78rem;

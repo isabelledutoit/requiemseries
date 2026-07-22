@@ -10,6 +10,8 @@ import {
   updateArtworkAction,
   deleteArtworkAction,
 } from "./_actions";
+import { Dropzone } from "./_dropzone";
+import { Tip, TipProvider } from "@/components/ui/tip";
 
 const DEFAULT_MEDIUM = "Oil on canvas";
 const DIMENSIONS_PLACEHOLDER = "36 x 48 in";
@@ -43,7 +45,6 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
   const [dimensions, setDimensions] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -70,7 +71,6 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
       setDimensions("");
       setDescription("");
       setFiles([]);
-      if (fileRef.current) fileRef.current.value = "";
       setStatus(null);
       router.refresh();
     } catch (e) {
@@ -82,6 +82,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
   }
 
   return (
+    <TipProvider>
     <div className="admin-grid">
       <section className="admin-panel">
         <h2 className="admin-subtitle">New artwork</h2>
@@ -112,19 +113,10 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
             <span>Description</span>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </label>
-          <label className="auth-field">
-            <span>Images * — full view + any detail shots</span>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-            />
-          </label>
-          {files.length > 0 && (
-            <p className="art-form-note">{files.length} image(s) selected</p>
-          )}
+          <div className="auth-field">
+            <span>Images *</span>
+            <Dropzone files={files} onFiles={setFiles} />
+          </div>
           {err && <p className="auth-err">{err}</p>}
           {status && <p className="art-form-note">{status}</p>}
           <button type="submit" className="auth-btn" disabled={busy}>
@@ -132,7 +124,8 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
           </button>
           <p className="art-form-hint">
             Creating clears the form. To add more images to or edit a work you
-            already made, use its card →
+            already made, use the actions under Works to Edit, Add images or
+            Delete.
           </p>
         </form>
       </section>
@@ -150,6 +143,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
         )}
       </section>
     </div>
+    </TipProvider>
   );
 }
 
@@ -234,30 +228,36 @@ function WorkCard({ art }: { art: ArtworkRow }) {
           </span>
         </div>
         <div className="art-card-actions">
-          <button
-            type="button"
-            className="art-edit"
-            onClick={() => (editing ? setEditing(false) : openEdit())}
-            disabled={busy !== null}
-          >
-            {editing ? "Close" : "Edit"}
-          </button>
-          <button
-            type="button"
-            className="art-add"
-            onClick={() => addRef.current?.click()}
-            disabled={busy !== null}
-          >
-            {busy === "upload" ? "Adding…" : "Add images"}
-          </button>
-          <button
-            type="button"
-            className="art-del"
-            onClick={onDelete}
-            disabled={busy !== null}
-          >
-            {busy === "delete" ? "…" : "Delete"}
-          </button>
+          <Tip label="Edit this work’s details">
+            <button
+              type="button"
+              className="art-edit"
+              onClick={() => (editing ? setEditing(false) : openEdit())}
+              disabled={busy !== null}
+            >
+              {editing ? "Close" : "Edit"}
+            </button>
+          </Tip>
+          <Tip label="Add more images to this work">
+            <button
+              type="button"
+              className="art-add"
+              onClick={() => addRef.current?.click()}
+              disabled={busy !== null}
+            >
+              {busy === "upload" ? "Adding…" : "Add images"}
+            </button>
+          </Tip>
+          <Tip label="Delete this work and its images">
+            <button
+              type="button"
+              className="art-del"
+              onClick={onDelete}
+              disabled={busy !== null}
+            >
+              {busy === "delete" ? "…" : "Delete"}
+            </button>
+          </Tip>
           <input ref={addRef} type="file" accept="image/*" multiple hidden onChange={onAddImages} />
         </div>
       </div>
