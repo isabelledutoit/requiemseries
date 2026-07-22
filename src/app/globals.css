@@ -717,7 +717,6 @@ a {
   height: 80vh;
   height: 80dvh;
   background: var(--dark-mid);
-  border: 1px solid var(--brown);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -729,6 +728,7 @@ a {
   width: auto;
   height: auto;
   object-fit: contain;
+  border: 1px solid rgba(170, 170, 180, 0.55);
   cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><circle cx='13' cy='13' r='7' fill='rgba(21,16,10,0.55)' stroke='%23a07d30' stroke-width='1.6'/><line x1='18' y1='18' x2='26' y2='26' stroke='%23a07d30' stroke-width='2' stroke-linecap='round'/><line x1='9' y1='13' x2='17' y2='13' stroke='%23a07d30' stroke-width='1.6' stroke-linecap='round'/><line x1='13' y1='9' x2='13' y2='17' stroke='%23a07d30' stroke-width='1.6' stroke-linecap='round'/></svg>") 13 13, zoom-in;
   display: block;
 }
@@ -815,6 +815,7 @@ a {
   max-width: 96vw;
   max-height: 92vh;
   object-fit: contain;
+  border: 1px solid rgba(170, 170, 180, 0.55);
 }
 .pf-lightbox-close {
   position: fixed;
