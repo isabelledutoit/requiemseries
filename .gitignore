@@ -35,3 +35,6 @@ Thumbs.db
 # Neon integration agent-skill cruft (local only)
 .claude/
 skills-lock.json
+
+# Vercel account token (local only)
+.vercel.token
