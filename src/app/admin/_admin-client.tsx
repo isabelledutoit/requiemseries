@@ -14,6 +14,7 @@ import {
 } from "./_actions";
 import { Dropzone } from "./_dropzone";
 import { Tip, TipProvider } from "@/components/ui/tip";
+import { ConfirmProvider, useConfirm } from "@/components/ui/confirm";
 
 const DEFAULT_MEDIUM = "Oil on canvas";
 const DIMENSIONS_PLACEHOLDER = "36 x 48 in";
@@ -84,6 +85,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
   }
 
   return (
+    <ConfirmProvider>
     <TipProvider>
     <div className="admin-grid">
       <section className="admin-panel">
@@ -146,11 +148,13 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
       </section>
     </div>
     </TipProvider>
+    </ConfirmProvider>
   );
 }
 
 function WorkCard({ art }: { art: ArtworkRow }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const addRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -206,7 +210,13 @@ function WorkCard({ art }: { art: ArtworkRow }) {
   }
 
   async function onDelete() {
-    if (!confirm(`Delete "${art.title}" and its images? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: "Delete artwork",
+      message: `Delete “${art.title}” and all its images? This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     setBusy("delete");
     try {
       await deleteArtworkAction(art.id);
@@ -236,10 +246,15 @@ function WorkCard({ art }: { art: ArtworkRow }) {
   }
   async function removeImage(id: string) {
     const only = art.images.length <= 1;
-    const msg = only
-      ? "This is the only image. Remove it anyway? The work will have no image until you add one."
-      : "Remove this image?";
-    if (!confirm(msg)) return;
+    const ok = await confirm({
+      title: only ? "Remove the only image?" : "Remove image",
+      message: only
+        ? "This is the only image. Remove it anyway? The work will have no image until you add one."
+        : "Remove this image from the artwork?",
+      confirmLabel: "Remove",
+      danger: true,
+    });
+    if (!ok) return;
     setBusy("removeimg");
     try {
       await deleteImageAction(id);

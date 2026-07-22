@@ -114,3 +114,46 @@ The new Portfolio reuses this exact language — palette, Patrick Hand uppercase
 slideshow + lightbox mechanics — but **cipher-free** (no token numbers, concept words, or
 embeddings). Each artwork block presents its images larger (~80vh stage). The Requiem
 landing keeps everything above, with its slide stage enlarged to ~80dvh to match.
+
+---
+
+## Application UI standards (Phase 3 — `/login`, `/welcome`, `/admin`, `/portfolio`)
+
+The React app (Next.js) reuses the palette + Patrick Hand above. All styles live in
+`src/app/globals.css`; no Tailwind (kept off to protect landing fidelity). Component
+classes in that file are the source of truth — follow these when adding UI.
+
+**Buttons (tiers, all `min-height` 40–48px, 3px radius, uppercase-ish letter-spacing):**
+- **Primary** (`.auth-btn`, `.art-save`, `.modal-confirm.danger`): filled `--blood`,
+  hover `--blood-mid`. The main commit action per surface.
+- **Ghost / secondary** (`.art-edit`, `.art-add`, `.art-cancel`, `.modal-cancel`):
+  transparent, `--brown-mid` border, `--bone-dim` text; hover → `--gold` border + `--bone`.
+- **Danger** (`.art-del`, `.art-mini.danger`): ghost shape, hover → `--blood-bright`.
+- **Mini** (`.art-mini`): compact per-image actions (Replace/Remove), same language.
+- Rule: **buttons in a set share size + shape**; only the hover accent differs. Never ship
+  an unstyled/native button.
+
+**Form fields** (`.auth-field` label + input/textarea): `--dark` bg, `--brown-mid` border,
+`--bone` text, focus border `--blood-bright`; label = tiny uppercase `--bone-faint`.
+Textareas share the same style. Prefill sensible defaults (Medium = "Oil on canvas"),
+inches for dimensions.
+
+**Dropzone** (`.dropzone`): dashed `--bone-faint` boundary (visible on dark), centered
+upload icon + "Drop images here / click to browse"; hover → `--gold`, drag-over → solid
+`--blood-bright`. Accumulates files; shows count + Clear.
+
+**Cards** (`.art-list-item`): `--dark-mid` fill, `--brown` border, thumbnail + meta +
+action row; expands to an inline edit form (details + per-image grid) with a top border.
+
+**Tooltips** (Radix, `Tip`/`TipProvider` in `@/components/ui/tip`): dark `--dark-mid`
+chip, `pointer-events:none` + `disableHoverableContent` so they never block a click.
+
+**Confirm modal** (`useConfirm`/`ConfirmProvider` in `@/components/ui/confirm`): replaces
+native `confirm()`. Backdrop blur + `.modal-card` pop-in; Esc = cancel, Enter = confirm;
+`danger` uses the blood primary. Use for every destructive action.
+
+**Portfolio slideshow**: ~80vh stage on `--dark-mid`, `object-fit: contain`, custom gold
+magnifier cursors (zoom-in `+` on images, zoom-out `−` in the lightbox — same as the
+landing), autoplay/manual/dots/play-pause, click → full-res lightbox.
+
+Motion respects `prefers-reduced-motion`.
