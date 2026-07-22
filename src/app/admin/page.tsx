@@ -33,8 +33,8 @@ export default async function AdminPage() {
           year: a.year ?? "",
           dimensions: a.dimensions ?? "",
           published: a.published,
-          imageCount: a.images.length,
           coverUrl: a.images[0]?.imageUrl ?? null,
+          images: a.images.map((im) => ({ id: im.id, url: im.imageUrl })),
         }))}
       />
     </main>

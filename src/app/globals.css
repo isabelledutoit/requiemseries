@@ -472,6 +472,70 @@ a {
   fill: var(--dark-mid);
 }
 
+/* ── Per-image manager (inside Edit) ── */
+.art-images {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.art-images-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bone-faint);
+}
+.art-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.6rem;
+}
+.art-image-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--dark);
+  border: 1px solid var(--brown);
+  border-radius: 3px;
+  padding: 0.35rem;
+}
+.art-image-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--dark-mid);
+}
+.art-image-acts {
+  display: flex;
+  gap: 0.3rem;
+}
+.art-mini {
+  flex: 1;
+  font-family: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--bone-dim);
+  background: none;
+  border: 1px solid var(--brown-mid);
+  border-radius: 3px;
+  padding: 0.3rem 0.2rem;
+  min-height: 32px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.art-mini:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--bone);
+}
+.art-mini.danger:hover:not(:disabled) {
+  border-color: var(--blood-bright);
+  color: var(--blood-bright);
+}
+.art-mini:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* ── Portfolio (public) ── */
 .pf-wrap {
   max-width: 78rem;
@@ -561,7 +625,7 @@ a {
   width: auto;
   height: auto;
   object-fit: contain;
-  cursor: zoom-in;
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><circle cx='13' cy='13' r='7' fill='rgba(21,16,10,0.55)' stroke='%23a07d30' stroke-width='1.6'/><line x1='18' y1='18' x2='26' y2='26' stroke='%23a07d30' stroke-width='2' stroke-linecap='round'/><line x1='9' y1='13' x2='17' y2='13' stroke='%23a07d30' stroke-width='1.6' stroke-linecap='round'/><line x1='13' y1='9' x2='13' y2='17' stroke='%23a07d30' stroke-width='1.6' stroke-linecap='round'/></svg>") 13 13, zoom-in;
   display: block;
 }
 .pf-arrow {
@@ -641,7 +705,7 @@ a {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  cursor: zoom-out;
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><circle cx='13' cy='13' r='7' fill='rgba(21,16,10,0.55)' stroke='%23a07d30' stroke-width='1.6'/><line x1='18' y1='18' x2='26' y2='26' stroke='%23a07d30' stroke-width='2' stroke-linecap='round'/><line x1='9' y1='13' x2='17' y2='13' stroke='%23a07d30' stroke-width='1.6' stroke-linecap='round'/></svg>") 13 13, zoom-out;
 }
 .pf-lightbox-img {
   max-width: 96vw;

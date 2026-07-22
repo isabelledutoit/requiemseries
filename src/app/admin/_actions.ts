@@ -112,6 +112,40 @@ export async function addImagesToArtworkAction(
   revalidatePath("/admin");
 }
 
+// Replace a single image in place (keeps its position). Swaps the blob URL on
+// the row and deletes the old blob.
+export async function replaceImageAction(imageId: string, image: NewArtworkImage) {
+  await requireAdmin();
+  const [old] = await db
+    .select()
+    .from(portfolioImage)
+    .where(eq(portfolioImage.id, imageId));
+  if (!old) return;
+  await db
+    .update(portfolioImage)
+    .set({ imageUrl: image.url, imagePathname: image.pathname })
+    .where(eq(portfolioImage.id, imageId));
+  if (old.imageUrl && old.imageUrl !== image.url) {
+    await del(old.imageUrl, { token: env.BLOB_READ_WRITE_TOKEN }).catch(() => {});
+  }
+  revalidatePath("/portfolio");
+  revalidatePath("/admin");
+}
+
+// Remove a single image from an artwork (blob + row).
+export async function deleteImageAction(imageId: string) {
+  await requireAdmin();
+  const [img] = await db
+    .select()
+    .from(portfolioImage)
+    .where(eq(portfolioImage.id, imageId));
+  if (!img) return;
+  await db.delete(portfolioImage).where(eq(portfolioImage.id, imageId));
+  await del(img.imageUrl, { token: env.BLOB_READ_WRITE_TOKEN }).catch(() => {});
+  revalidatePath("/portfolio");
+  revalidatePath("/admin");
+}
+
 export async function deleteArtworkAction(id: string) {
   await requireAdmin();
   const imgs = await db

@@ -9,6 +9,8 @@ import {
   addImagesToArtworkAction,
   updateArtworkAction,
   deleteArtworkAction,
+  replaceImageAction,
+  deleteImageAction,
 } from "./_actions";
 import { Dropzone } from "./_dropzone";
 import { Tip, TipProvider } from "@/components/ui/tip";
@@ -24,8 +26,8 @@ type ArtworkRow = {
   year: string;
   dimensions: string;
   published: boolean;
-  imageCount: number;
   coverUrl: string | null;
+  images: { id: string; url: string }[];
 };
 
 async function uploadOne(file: File) {
@@ -160,6 +162,8 @@ function WorkCard({ art }: { art: ArtworkRow }) {
   const [dimensions, setDimensions] = useState(art.dimensions);
   const [description, setDescription] = useState(art.description);
   const [editErr, setEditErr] = useState<string | null>(null);
+  const replaceRef = useRef<HTMLInputElement>(null);
+  const [replacingId, setReplacingId] = useState<string | null>(null);
 
   function openEdit() {
     setTitle(art.title);
@@ -212,6 +216,39 @@ function WorkCard({ art }: { art: ArtworkRow }) {
     }
   }
 
+  function startReplace(id: string) {
+    setReplacingId(id);
+    replaceRef.current?.click();
+  }
+  async function onReplaceFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f || !replacingId) return;
+    setBusy("replace");
+    try {
+      const img = await uploadOne(f);
+      await replaceImageAction(replacingId, img);
+      if (replaceRef.current) replaceRef.current.value = "";
+      setReplacingId(null);
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+  async function removeImage(id: string) {
+    const only = art.images.length <= 1;
+    const msg = only
+      ? "This is the only image. Remove it anyway? The work will have no image until you add one."
+      : "Remove this image?";
+    if (!confirm(msg)) return;
+    setBusy("removeimg");
+    try {
+      await deleteImageAction(id);
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <li className="art-list-item">
       <div className="art-card-head">
@@ -224,7 +261,7 @@ function WorkCard({ art }: { art: ArtworkRow }) {
         <div className="art-list-meta">
           <span className="art-list-title">{art.title}</span>
           <span className="art-list-sub">
-            {art.imageCount} image(s){art.published ? "" : " · hidden"}
+            {art.images.length} image(s){art.published ? "" : " · hidden"}
           </span>
         </div>
         <div className="art-card-actions">
@@ -290,6 +327,36 @@ function WorkCard({ art }: { art: ArtworkRow }) {
             <span>Description</span>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </label>
+          <div className="art-images">
+            <span className="art-images-label">Images ({art.images.length}) — replace or remove any</span>
+            <div className="art-images-grid">
+              {art.images.map((im) => (
+                <div key={im.id} className="art-image-cell">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={im.url} alt="" className="art-image-thumb" />
+                  <div className="art-image-acts">
+                    <button
+                      type="button"
+                      className="art-mini"
+                      onClick={() => startReplace(im.id)}
+                      disabled={busy !== null}
+                    >
+                      {busy === "replace" && replacingId === im.id ? "…" : "Replace"}
+                    </button>
+                    <button
+                      type="button"
+                      className="art-mini danger"
+                      onClick={() => removeImage(im.id)}
+                      disabled={busy !== null}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <input ref={replaceRef} type="file" accept="image/*" hidden onChange={onReplaceFile} />
+          </div>
           {editErr && <p className="auth-err">{editErr}</p>}
           <div className="art-edit-actions">
             <button type="submit" className="art-save" disabled={busy !== null}>
