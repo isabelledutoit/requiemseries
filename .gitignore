@@ -31,3 +31,7 @@ Thumbs.db
 
 # Neon integration agent-skill (local only)
 .agents/
+
+# Neon integration agent-skill cruft (local only)
+.claude/
+skills-lock.json
