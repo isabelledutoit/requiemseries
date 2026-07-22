@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Requiem">
+  <rect width="32" height="32" rx="6" fill="#15100a"/>
+  <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" fill="none" stroke="#3a2510" stroke-width="1"/>
+  <text x="16" y="23" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="21" font-weight="700" fill="#f5f0e5">R</text>
+  <rect x="9" y="25.5" width="14" height="2" rx="1" fill="#a81818"/>
+</svg>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Requiem — Isabelle du Toit</title>
+    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
     <style>
@@ -57,6 +58,53 @@
             clip: rect(0, 0, 0, 0);
             white-space: nowrap;
             border: 0;
+        }
+
+        /* ── TOP NAV ── */
+        .topnav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: max(1rem, env(safe-area-inset-top)) max(1.6rem, env(safe-area-inset-right)) 1rem max(1.6rem, env(safe-area-inset-left));
+            pointer-events: none;
+        }
+        .topnav a { pointer-events: auto; }
+        .topnav-brand {
+            font-size: 1.05rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--bone);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            transition: color 0.3s;
+        }
+        .topnav-brand:hover { color: var(--gold); }
+        .topnav-links { display: flex; align-items: center; gap: 1.6rem; }
+        .topnav-links a {
+            font-size: 0.8rem;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            color: var(--bone-dim);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            transition: color 0.3s;
+        }
+        .topnav-links a:hover { color: var(--bone); }
+        @media (max-width: 600px) {
+            .topnav-brand { font-size: 0.9rem; letter-spacing: 0.2em; }
+            .topnav-links { gap: 1rem; }
+            .topnav-links a { font-size: 0.72rem; letter-spacing: 0.18em; }
+        }
+        @media (max-width: 380px) {
+            .topnav-brand { display: none; }
         }
 
         body {
@@ -1303,6 +1351,14 @@
 <body>
 
 <a class="skip-link" href="#main-content">Skip to artwork</a>
+
+<nav class="topnav" aria-label="Primary">
+    <a class="topnav-brand" href="#hero">Requiem</a>
+    <div class="topnav-links">
+        <a href="mailto:dutoit.isabelle@gmail.com">Contact</a>
+        <a href="https://isabelledutoit.com/requiem" target="_blank" rel="noopener">Portfolio</a>
+    </div>
+</nav>
 
 <canvas id="bg-canvas"></canvas>
 
