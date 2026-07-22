@@ -1,0 +1,40 @@
+/* Shared design tokens (from DESIGN.md) for the React routes
+   (portfolio / admin / login). The Requiem landing carries its own
+   inline CSS in public/requiem.html. */
+:root {
+  --bone: #f5f0e5;
+  --bone-dim: #d8cfbc;
+  --bone-faint: #9e9482;
+  --dark: #15100a;
+  --dark-mid: #1f1810;
+  --brown: #3a2510;
+  --brown-mid: #523516;
+  --blood: #8a1414;
+  --blood-mid: #a81818;
+  --blood-bright: #d94a4a;
+  --gold: #a07d30;
+  --gold-dim: #6a4f1a;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--dark);
+  color: var(--bone);
+  font-family: "Patrick Hand", cursive;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}

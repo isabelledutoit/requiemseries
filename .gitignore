@@ -5,9 +5,17 @@
 .shots/
 .playwright-mcp/
 
+# Node / Next.js
+node_modules/
+/.next/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
 # Environment / secrets
 .env
-.env.*
+.env*.local
+!.env.example
 *.pem
 *.key
 *.p12
@@ -19,3 +27,4 @@ id_rsa*
 Thumbs.db
 .idea/
 .vscode/
+.env*
