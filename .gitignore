@@ -1,0 +1,21 @@
+# Vercel
+.vercel
+
+# Local-only test artifacts (Playwright screenshots, etc.)
+.shots/
+.playwright-mcp/
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
