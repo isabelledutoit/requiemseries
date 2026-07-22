@@ -28,3 +28,6 @@ Thumbs.db
 .idea/
 .vscode/
 .env*
+
+# Neon integration agent-skill (local only)
+.agents/
