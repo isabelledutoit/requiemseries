@@ -226,8 +226,10 @@ a {
   border: 1px solid var(--brown-mid);
   border-radius: 3px;
   padding: 0.55rem 0.8rem;
-  resize: vertical;
   line-height: 1.5;
+  min-height: 5.5rem;
+  resize: none;
+  overflow-y: hidden;
 }
 .auth-field textarea:focus-visible {
   outline: none;
@@ -658,16 +660,31 @@ a {
   margin-top: 0.4rem;
 }
 .pf-back {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 1rem;
+  min-height: 44px;
+  padding: 0.5rem 1.2rem;
   color: var(--bone-dim);
+  background: none;
+  border: 1px solid var(--brown-mid);
+  border-radius: 3px;
   text-decoration: none;
   letter-spacing: 0.3em;
   text-transform: uppercase;
   font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 .pf-back:hover {
-  color: var(--gold);
+  color: var(--bone);
+  border-color: var(--gold);
+  background: var(--dark-mid);
+}
+.pf-back:focus-visible {
+  outline: none;
+  border-color: var(--blood-bright);
 }
 .pf-empty {
   text-align: center;

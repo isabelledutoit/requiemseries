@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { artworkImagePathname } from "@/lib/blob";
@@ -18,6 +18,46 @@ import { ConfirmProvider, useConfirm } from "@/components/ui/confirm";
 
 const DEFAULT_MEDIUM = "Oil on canvas";
 const DIMENSIONS_PLACEHOLDER = "36 x 48 in";
+// Prefill the year with the current year so Isabelle rarely has to touch it;
+// still fully editable for older works.
+const DEFAULT_YEAR = String(new Date().getFullYear());
+
+// Grow a textarea to fit its content. Desktop has a drag handle; touch (iPad /
+// iPhone Safari) does not, so a fixed-height box traps long text behind an inner
+// scroll. Auto-sizing means the box always shows everything on every device.
+function fitTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  // scrollHeight excludes the border; under box-sizing: border-box (Tailwind's
+  // global default) the border must be added back or the last line gets clipped.
+  const border = el.offsetHeight - el.clientHeight;
+  el.style.height = `${el.scrollHeight + border}px`;
+}
+
+function AutoTextarea({
+  value,
+  onChange,
+  ...rest
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  value: string;
+  onChange: React.ChangeEventHandler<HTMLTextAreaElement>;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  // Re-fit whenever the value changes — covers typing and the edit form opening
+  // with an existing (possibly long) description already in state.
+  useEffect(() => fitTextarea(ref.current), [value]);
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={(e) => {
+        onChange(e);
+        fitTextarea(e.currentTarget);
+      }}
+      {...rest}
+    />
+  );
+}
 
 type ArtworkRow = {
   id: string;
@@ -44,7 +84,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [medium, setMedium] = useState(DEFAULT_MEDIUM);
-  const [year, setYear] = useState("");
+  const [year, setYear] = useState(DEFAULT_YEAR);
   const [dimensions, setDimensions] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -70,7 +110,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
       // its default (Isabelle's usual), not blank.
       setTitle("");
       setMedium(DEFAULT_MEDIUM);
-      setYear("");
+      setYear(DEFAULT_YEAR);
       setDimensions("");
       setDescription("");
       setFiles([]);
@@ -115,7 +155,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
           </label>
           <label className="auth-field">
             <span>Description</span>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+            <AutoTextarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </label>
           <div className="auth-field">
             <span>Images *</span>
@@ -340,7 +380,7 @@ function WorkCard({ art }: { art: ArtworkRow }) {
           </label>
           <label className="auth-field">
             <span>Description</span>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+            <AutoTextarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </label>
           <div className="art-images">
             <span className="art-images-label">Images ({art.images.length}) — replace or remove any</span>

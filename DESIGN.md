@@ -132,11 +132,19 @@ classes in that file are the source of truth — follow these when adding UI.
 - **Mini** (`.art-mini`): compact per-image actions (Replace/Remove), same language.
 - Rule: **buttons in a set share size + shape**; only the hover accent differs. Never ship
   an unstyled/native button.
+- **Nav-as-button** (`.pf-back` "← Requiem" on `/portfolio`): a control that *navigates*
+  stays a `<Link>`/`<a>` (keeps new-tab, right-click, and link semantics) but wears the
+  ghost-button skin — `--brown-mid` border, hover → `--gold` border + `--dark-mid` fill,
+  44px tap target. Style a nav link like a button; don't convert it to a `<button>`.
 
 **Form fields** (`.auth-field` label + input/textarea): `--dark` bg, `--brown-mid` border,
 `--bone` text, focus border `--blood-bright`; label = tiny uppercase `--bone-faint`.
-Textareas share the same style. Prefill sensible defaults (Medium = "Oil on canvas"),
-inches for dimensions.
+Textareas **auto-grow to fit their content** (`AutoTextarea` in `_admin-client.tsx`:
+`resize:none` + JS that sets `height` to `scrollHeight` on mount and every change, over a
+`min-height:5.5rem` floor). This replaces the desktop-only drag handle, which iPad/iPhone
+Safari never render — long descriptions stay fully visible and editable on touch. Prefill
+sensible defaults, all editable: Medium = "Oil on canvas", **Year = current year**
+(`DEFAULT_YEAR`), dimensions in inches.
 
 **Dropzone** (`.dropzone`): dashed `--bone-faint` boundary (visible on dark), centered
 upload icon + "Drop images here / click to browse"; hover → `--gold`, drag-over → solid
