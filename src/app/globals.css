@@ -313,6 +313,7 @@ a {
 .art-edit,
 .art-add,
 .art-del,
+.art-hide,
 .art-save,
 .art-cancel {
   font-family: inherit;
@@ -331,6 +332,7 @@ a {
 .art-edit,
 .art-add,
 .art-del,
+.art-hide,
 .art-cancel {
   background: none;
   border: 1px solid var(--brown-mid);
@@ -338,6 +340,7 @@ a {
 }
 .art-edit:hover:not(:disabled),
 .art-add:hover:not(:disabled),
+.art-hide:hover:not(:disabled),
 .art-cancel:hover:not(:disabled) {
   border-color: var(--gold);
   color: var(--bone);
@@ -359,6 +362,7 @@ a {
 .art-edit:disabled,
 .art-add:disabled,
 .art-del:disabled,
+.art-hide:disabled,
 .art-save:disabled,
 .art-cancel:disabled {
   opacity: 0.5;

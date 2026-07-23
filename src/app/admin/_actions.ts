@@ -97,6 +97,19 @@ export async function updateArtworkAction(id: string, fields: UpdateArtworkInput
   revalidatePath("/admin");
 }
 
+// Show/hide a work on the public portfolio without deleting it. An image-less
+// work stays hidden regardless (see visiblePublishedWhere), so this is only
+// meaningful for works that have images.
+export async function setArtworkPublishedAction(id: string, published: boolean) {
+  await requireAdmin();
+  await db
+    .update(portfolioArtwork)
+    .set({ published, updatedAt: new Date() })
+    .where(eq(portfolioArtwork.id, id));
+  revalidatePath("/portfolio");
+  revalidatePath("/admin");
+}
+
 // Append more images to an existing artwork (Isabelle's full view + details).
 export async function addImagesToArtworkAction(
   artworkId: string,

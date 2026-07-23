@@ -12,6 +12,7 @@ import {
   deleteArtworkAction,
   replaceImageAction,
   deleteImageAction,
+  setArtworkPublishedAction,
 } from "./_actions";
 import { Dropzone } from "./_dropzone";
 import { Tip, TipProvider } from "@/components/ui/tip";
@@ -275,6 +276,16 @@ function WorkCard({ art }: { art: ArtworkRow }) {
     }
   }
 
+  async function onTogglePublished() {
+    setBusy("publish");
+    try {
+      await setArtworkPublishedAction(art.id, !art.published);
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+
   function startReplace(id: string) {
     setReplacingId(id);
     replaceRef.current?.click();
@@ -357,6 +368,24 @@ function WorkCard({ art }: { art: ArtworkRow }) {
               {busy === "upload" ? "Adding…" : "Add images"}
             </button>
           </Tip>
+          {art.images.length > 0 && (
+            <Tip
+              label={
+                art.published
+                  ? "Hide this work from your public portfolio"
+                  : "Show this work on your public portfolio"
+              }
+            >
+              <button
+                type="button"
+                className="art-hide"
+                onClick={onTogglePublished}
+                disabled={busy !== null}
+              >
+                {busy === "publish" ? "…" : art.published ? "Hide" : "Show"}
+              </button>
+            </Tip>
+          )}
           <Tip label="Delete this work and its images">
             <button
               type="button"
