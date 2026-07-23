@@ -1,15 +1,23 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
-type Img = { url: string; alt: string };
+type Img = {
+  url: string;
+  alt: string;
+  width: number | null;
+  height: number | null;
+};
 
 export function ArtworkSlideshow({
   images,
   title,
+  priority = false,
 }: {
   images: Img[];
   title: string;
+  priority?: boolean;
 }) {
   const n = images.length;
   const [idx, setIdx] = useState(0);
@@ -41,13 +49,28 @@ export function ArtworkSlideshow({
   return (
     <div className="pf-stage-wrap">
       <div className="pf-stage">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={cur.url}
-          alt={cur.alt}
-          className="pf-img"
-          onClick={() => setLightbox(true)}
-        />
+        {cur.width && cur.height ? (
+          <Image
+            src={cur.url}
+            alt={cur.alt}
+            width={cur.width}
+            height={cur.height}
+            className="pf-img"
+            // Displayed at up to the stage width; serve a size to match.
+            sizes="(min-width: 1100px) 1100px, 100vw"
+            priority={priority}
+            onClick={() => setLightbox(true)}
+          />
+        ) : (
+          /* Legacy row without stored dimensions — plain <img> fallback. */
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={cur.url}
+            alt={cur.alt}
+            className="pf-img"
+            onClick={() => setLightbox(true)}
+          />
+        )}
         {n > 1 && (
           <>
             <button
@@ -102,8 +125,20 @@ export function ArtworkSlideshow({
           aria-modal="true"
           aria-label={`${title} — full image`}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={cur.url} alt={cur.alt} className="pf-lightbox-img" />
+          {cur.width && cur.height ? (
+            <Image
+              src={cur.url}
+              alt={cur.alt}
+              width={cur.width}
+              height={cur.height}
+              className="pf-lightbox-img"
+              sizes="100vw"
+              quality={90}
+            />
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={cur.url} alt={cur.alt} className="pf-lightbox-img" />
+          )}
           <button
             className="pf-lightbox-close"
             onClick={() => setLightbox(false)}

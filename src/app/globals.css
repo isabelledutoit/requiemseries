@@ -816,6 +816,44 @@ a {
   letter-spacing: 0.15em;
 }
 
+/* Pagination (Prev / Continue between pages of 10 artworks) */
+.pf-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 3.5rem auto 0;
+  flex-wrap: wrap;
+}
+.pf-page-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.25rem;
+  color: var(--bone-dim);
+  background: none;
+  border: 1px solid var(--brown-mid);
+  border-radius: 3px;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.pf-page-btn:hover {
+  color: var(--bone);
+  border-color: var(--gold);
+}
+.pf-page-btn.is-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.pf-page-status {
+  color: var(--bone-faint);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+}
+
 /* Lightbox */
 .pf-lightbox {
   position: fixed;
@@ -831,6 +869,8 @@ a {
 .pf-lightbox-img {
   max-width: 96vw;
   max-height: 92vh;
+  width: auto;
+  height: auto;
   object-fit: contain;
   border: 1px solid rgba(170, 170, 180, 0.55);
 }

@@ -103,6 +103,11 @@ export const portfolioImage = pgTable(
     imageUrl: text("image_url").notNull(),
     imagePathname: text("image_pathname").notNull(),
     altText: text("alt_text"),
+    // Intrinsic pixel size of the stored (post-compression) image. Lets
+    // next/image reserve space and hug the frame with zero layout shift.
+    // Nullable: rows created before this column fall back to a plain <img>.
+    width: integer("width"),
+    height: integer("height"),
     // Sort order of images within an artwork (ascending).
     position: integer("position").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -9,7 +9,13 @@ import { portfolioArtwork, portfolioImage } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth/roles";
 import { env } from "@/lib/env";
 
-export type NewArtworkImage = { url: string; pathname: string; alt?: string };
+export type NewArtworkImage = {
+  url: string;
+  pathname: string;
+  alt?: string;
+  width?: number | null;
+  height?: number | null;
+};
 
 export type NewArtworkInput = {
   title: string;
@@ -50,6 +56,8 @@ export async function createArtworkAction(input: NewArtworkInput) {
       imageUrl: im.url,
       imagePathname: im.pathname,
       altText: im.alt?.trim() || null,
+      width: im.width ?? null,
+      height: im.height ?? null,
       position: idx,
     })),
   );
@@ -105,6 +113,8 @@ export async function addImagesToArtworkAction(
       imageUrl: im.url,
       imagePathname: im.pathname,
       altText: im.alt?.trim() || null,
+      width: im.width ?? null,
+      height: im.height ?? null,
       position: start + idx,
     })),
   );
@@ -123,7 +133,12 @@ export async function replaceImageAction(imageId: string, image: NewArtworkImage
   if (!old) return;
   await db
     .update(portfolioImage)
-    .set({ imageUrl: image.url, imagePathname: image.pathname })
+    .set({
+      imageUrl: image.url,
+      imagePathname: image.pathname,
+      width: image.width ?? null,
+      height: image.height ?? null,
+    })
     .where(eq(portfolioImage.id, imageId));
   if (old.imageUrl && old.imageUrl !== image.url) {
     await del(old.imageUrl, { token: env.BLOB_READ_WRITE_TOKEN }).catch(() => {});

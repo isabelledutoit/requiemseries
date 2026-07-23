@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { artworkImagePathname } from "@/lib/blob";
+import { compressForUpload } from "@/lib/image-compress";
 import {
   createArtworkAction,
   addImagesToArtworkAction,
@@ -72,12 +73,15 @@ type ArtworkRow = {
 };
 
 async function uploadOne(file: File) {
-  const res = await upload(artworkImagePathname(file.name), file, {
+  // Downscale/convert to WebP in the browser first (oversized/heavy files only);
+  // small web-ready images pass through untouched. See src/lib/image-compress.ts.
+  const { file: prepared, width, height } = await compressForUpload(file);
+  const res = await upload(artworkImagePathname(prepared.name), prepared, {
     access: "public",
     handleUploadUrl: "/api/portfolio/upload",
     multipart: true,
   });
-  return { url: res.url, pathname: res.pathname };
+  return { url: res.url, pathname: res.pathname, width, height };
 }
 
 export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
@@ -99,7 +103,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
     if (files.length === 0) return setErr("Add at least one image.");
     setBusy(true);
     try {
-      const images: { url: string; pathname: string }[] = [];
+      const images: Awaited<ReturnType<typeof uploadOne>>[] = [];
       for (let i = 0; i < files.length; i++) {
         setStatus(`Uploading ${i + 1} of ${files.length}…`);
         images.push(await uploadOne(files[i]));
@@ -239,7 +243,7 @@ function WorkCard({ art }: { art: ArtworkRow }) {
     if (picked.length === 0) return;
     setBusy("upload");
     try {
-      const images: { url: string; pathname: string }[] = [];
+      const images: Awaited<ReturnType<typeof uploadOne>>[] = [];
       for (const f of picked) images.push(await uploadOne(f));
       await addImagesToArtworkAction(art.id, images);
       if (addRef.current) addRef.current.value = "";
