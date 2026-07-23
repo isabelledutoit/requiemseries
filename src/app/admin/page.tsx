@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/roles";
-import { listAllArtworks } from "@/lib/db/queries";
+import { listAllArtworks, listTrashedArtworks } from "@/lib/db/queries";
 import { SignOutButton } from "./_signout";
 import { AdminClient } from "./_admin-client";
 
@@ -8,7 +8,10 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const session = await requireAdmin();
-  const artworks = await listAllArtworks();
+  const [artworks, trashed] = await Promise.all([
+    listAllArtworks(),
+    listTrashedArtworks(),
+  ]);
   return (
     <main className="admin-wrap">
       <header className="admin-head">
@@ -35,6 +38,13 @@ export default async function AdminPage() {
           published: a.published,
           coverUrl: a.images[0]?.imageUrl ?? null,
           images: a.images.map((im) => ({ id: im.id, url: im.imageUrl })),
+        }))}
+        trashed={trashed.map((a) => ({
+          id: a.id,
+          title: a.title,
+          coverUrl: a.images[0]?.imageUrl ?? null,
+          imageCount: a.images.length,
+          deletedAt: (a.deletedAt ?? new Date()).toISOString(),
         }))}
       />
     </main>

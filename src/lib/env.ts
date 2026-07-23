@@ -15,6 +15,13 @@ const envSchema = z.object({
       "vercel_blob_rw_",
       "BLOB_READ_WRITE_TOKEN must start with vercel_blob_rw_",
     ),
+  // Shared secret Vercel Cron sends as `Authorization: Bearer <secret>` when
+  // invoking /api/cron/purge-trash. Optional so local/preview boots without it;
+  // the cron route fails closed (401) when it's unset. Set it in Vercel env.
+  CRON_SECRET: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().min(16).optional(),
+  ),
   // Email is OFF for now (email verification disabled). These are optional
   // until Resend + send.isabelledutoit.com are wired.
   RESEND_API_KEY: z.preprocess(

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
   portfolioArtwork,
@@ -75,12 +75,23 @@ export async function countPublishedArtworks(): Promise<number> {
   return Number(row?.c ?? 0);
 }
 
-// Admin — everything not hard-deleted.
+// Admin — live works (in the Trash are excluded; see listTrashedArtworks).
 export async function listAllArtworks(): Promise<ArtworkWithImages[]> {
   const arts = await db
     .select()
     .from(portfolioArtwork)
     .where(isNull(portfolioArtwork.deletedAt))
     .orderBy(asc(portfolioArtwork.position), asc(portfolioArtwork.createdAt));
+  return attachImages(arts);
+}
+
+// Admin Trash — soft-deleted works, most-recently-trashed first. The cron
+// hard-deletes these once TRASH_RETENTION_DAYS elapses.
+export async function listTrashedArtworks(): Promise<ArtworkWithImages[]> {
+  const arts = await db
+    .select()
+    .from(portfolioArtwork)
+    .where(isNotNull(portfolioArtwork.deletedAt))
+    .orderBy(desc(portfolioArtwork.deletedAt));
   return attachImages(arts);
 }

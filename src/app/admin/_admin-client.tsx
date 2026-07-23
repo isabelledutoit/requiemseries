@@ -13,10 +13,14 @@ import {
   replaceImageAction,
   deleteImageAction,
   setArtworkPublishedAction,
+  restoreArtworkAction,
+  purgeArtworkAction,
+  deleteBlobsAction,
 } from "./_actions";
 import { Dropzone } from "./_dropzone";
 import { Tip, TipProvider } from "@/components/ui/tip";
 import { ConfirmProvider, useConfirm } from "@/components/ui/confirm";
+import { TRASH_RETENTION_DAYS, trashDaysLeft } from "@/lib/trash";
 
 const DEFAULT_MEDIUM = "Oil on canvas";
 const DIMENSIONS_PLACEHOLDER = "36 x 48 in";
@@ -73,6 +77,14 @@ type ArtworkRow = {
   images: { id: string; url: string }[];
 };
 
+type TrashRow = {
+  id: string;
+  title: string;
+  coverUrl: string | null;
+  imageCount: number;
+  deletedAt: string; // ISO — for the auto-delete countdown
+};
+
 async function uploadOne(file: File) {
   // Downscale/convert to WebP in the browser first (oversized/heavy files only);
   // small web-ready images pass through untouched. See src/lib/image-compress.ts.
@@ -85,7 +97,20 @@ async function uploadOne(file: File) {
   return { url: res.url, pathname: res.pathname, width, height };
 }
 
-export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
+// Delete blobs that were uploaded but never persisted (the save action threw).
+// Best-effort — a failed cleanup shouldn't surface a second error to the user.
+async function rollbackBlobs(uploaded: { url: string }[]) {
+  if (uploaded.length === 0) return;
+  await deleteBlobsAction(uploaded.map((u) => u.url)).catch(() => {});
+}
+
+export function AdminClient({
+  artworks,
+  trashed,
+}: {
+  artworks: ArtworkRow[];
+  trashed: TrashRow[];
+}) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [medium, setMedium] = useState(DEFAULT_MEDIUM);
@@ -103,8 +128,10 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
     if (!title.trim()) return setErr("Title is required.");
     // Images are optional — a work with none is saved as a private draft.
     setBusy(true);
+    // Track blobs already uploaded so we can roll them back if the save fails —
+    // otherwise a thrown action leaves orphaned (billable) blobs with no row.
+    const images: Awaited<ReturnType<typeof uploadOne>>[] = [];
     try {
-      const images: Awaited<ReturnType<typeof uploadOne>>[] = [];
       for (let i = 0; i < files.length; i++) {
         setStatus(`Uploading ${i + 1} of ${files.length}…`);
         images.push(await uploadOne(files[i]));
@@ -122,6 +149,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
       setStatus(null);
       router.refresh();
     } catch (e) {
+      await rollbackBlobs(images);
       setErr(e instanceof Error ? e.message : "Upload failed.");
       setStatus(null);
     } finally {
@@ -195,10 +223,103 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
             ))}
           </ul>
         )}
+
+        {trashed.length > 0 && <TrashPanel trashed={trashed} />}
       </section>
     </div>
     </TipProvider>
     </ConfirmProvider>
+  );
+}
+
+function TrashPanel({ trashed }: { trashed: TrashRow[] }) {
+  const router = useRouter();
+  const confirm = useConfirm();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function onRestore(t: TrashRow) {
+    setBusy(t.id);
+    try {
+      await restoreArtworkAction(t.id);
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onPurge(t: TrashRow) {
+    const ok = await confirm({
+      title: "Delete permanently",
+      message: `Permanently delete “${t.title}” and its images now? This cannot be undone.`,
+      confirmLabel: "Delete permanently",
+      danger: true,
+    });
+    if (!ok) return;
+    setBusy(t.id);
+    try {
+      await purgeArtworkAction(t.id);
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="art-trash">
+      <h3 className="art-trash-title">Trash ({trashed.length})</h3>
+      <p className="art-trash-hint">
+        Deleted works are kept for {TRASH_RETENTION_DAYS} days, then removed
+        automatically. Restore anytime before then.
+      </p>
+      <ul className="art-list">
+        {trashed.map((t) => {
+          const daysLeft = trashDaysLeft(t.deletedAt);
+          return (
+            <li key={t.id} className="art-list-item art-trash-item">
+              <div className="art-card-head">
+                {t.coverUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={t.coverUrl} alt="" className="art-thumb" />
+                ) : (
+                  <div className="art-thumb art-thumb-empty" />
+                )}
+                <div className="art-list-meta">
+                  <span className="art-list-title">{t.title}</span>
+                  <span className="art-list-sub">
+                    {t.imageCount} image(s) ·{" "}
+                    {daysLeft > 0
+                      ? `auto-deletes in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`
+                      : "deletes on next cleanup"}
+                  </span>
+                </div>
+                <div className="art-card-actions">
+                  <Tip label="Restore this work to your portfolio">
+                    <button
+                      type="button"
+                      className="art-add"
+                      onClick={() => onRestore(t)}
+                      disabled={busy !== null}
+                    >
+                      {busy === t.id ? "…" : "Restore"}
+                    </button>
+                  </Tip>
+                  <Tip label="Delete this work permanently now">
+                    <button
+                      type="button"
+                      className="art-del"
+                      onClick={() => onPurge(t)}
+                      disabled={busy !== null}
+                    >
+                      Delete permanently
+                    </button>
+                  </Tip>
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -248,12 +369,14 @@ function WorkCard({ art }: { art: ArtworkRow }) {
     const picked = Array.from(e.target.files ?? []);
     if (picked.length === 0) return;
     setBusy("upload");
+    const images: Awaited<ReturnType<typeof uploadOne>>[] = [];
     try {
-      const images: Awaited<ReturnType<typeof uploadOne>>[] = [];
       for (const f of picked) images.push(await uploadOne(f));
       await addImagesToArtworkAction(art.id, images);
       if (addRef.current) addRef.current.value = "";
       router.refresh();
+    } catch {
+      await rollbackBlobs(images);
     } finally {
       setBusy(null);
     }
@@ -261,9 +384,9 @@ function WorkCard({ art }: { art: ArtworkRow }) {
 
   async function onDelete() {
     const ok = await confirm({
-      title: "Delete artwork",
-      message: `Delete “${art.title}” and all its images? This cannot be undone.`,
-      confirmLabel: "Delete",
+      title: "Move to Trash",
+      message: `Move “${art.title}” to the Trash? It comes off your public portfolio right away and is kept for ${TRASH_RETENTION_DAYS} days, so you can restore it if you change your mind.`,
+      confirmLabel: "Move to Trash",
       danger: true,
     });
     if (!ok) return;
@@ -294,12 +417,15 @@ function WorkCard({ art }: { art: ArtworkRow }) {
     const f = e.target.files?.[0];
     if (!f || !replacingId) return;
     setBusy("replace");
+    let uploaded: Awaited<ReturnType<typeof uploadOne>> | null = null;
     try {
-      const img = await uploadOne(f);
-      await replaceImageAction(replacingId, img);
+      uploaded = await uploadOne(f);
+      await replaceImageAction(replacingId, uploaded);
       if (replaceRef.current) replaceRef.current.value = "";
       setReplacingId(null);
       router.refresh();
+    } catch {
+      if (uploaded) await rollbackBlobs([uploaded]);
     } finally {
       setBusy(null);
     }
@@ -386,7 +512,7 @@ function WorkCard({ art }: { art: ArtworkRow }) {
               </button>
             </Tip>
           )}
-          <Tip label="Delete this work and its images">
+          <Tip label={`Move to Trash — recoverable for ${TRASH_RETENTION_DAYS} days`}>
             <button
               type="button"
               className="art-del"

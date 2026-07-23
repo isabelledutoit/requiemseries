@@ -8,6 +8,7 @@ import { db } from "@/lib/db/client";
 import { portfolioArtwork, portfolioImage } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth/roles";
 import { env } from "@/lib/env";
+import { hardDeleteArtwork } from "@/lib/portfolio/purge";
 
 export type NewArtworkImage = {
   url: string;
@@ -177,19 +178,48 @@ export async function deleteImageAction(imageId: string) {
   revalidatePath("/admin");
 }
 
+// Soft delete — move a work to the Trash. It vanishes from /portfolio and the
+// main /admin list immediately (both filter deletedAt IS NULL) but its blobs are
+// kept so it can be restored. The daily cron hard-deletes it after
+// TRASH_RETENTION_DAYS (see purgeExpiredTrash / /api/cron/purge-trash).
 export async function deleteArtworkAction(id: string) {
   await requireAdmin();
-  const imgs = await db
-    .select()
-    .from(portfolioImage)
-    .where(eq(portfolioImage.artworkId, id));
-  // Best-effort blob cleanup; DB cascade removes the image rows with the artwork.
-  await Promise.allSettled(
-    imgs.map((im) =>
-      del(im.imageUrl, { token: env.BLOB_READ_WRITE_TOKEN }),
-    ),
-  );
-  await db.delete(portfolioArtwork).where(eq(portfolioArtwork.id, id));
+  await db
+    .update(portfolioArtwork)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(eq(portfolioArtwork.id, id));
   revalidatePath("/portfolio");
   revalidatePath("/admin");
+}
+
+// Bring a work back from the Trash.
+export async function restoreArtworkAction(id: string) {
+  await requireAdmin();
+  await db
+    .update(portfolioArtwork)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(eq(portfolioArtwork.id, id));
+  revalidatePath("/portfolio");
+  revalidatePath("/admin");
+}
+
+// Permanently delete one work now (blobs + row). Used by the "Delete
+// permanently" button in the Trash. The heavy lifting lives in a server-only
+// helper (not a "use server" export) so it isn't reachable without this guard.
+export async function purgeArtworkAction(id: string) {
+  await requireAdmin();
+  await hardDeleteArtwork(id);
+  revalidatePath("/admin");
+}
+
+// Roll back blobs that were uploaded to Vercel Blob but never got persisted to a
+// row — e.g. when the create/add/replace server action throws after upload, or
+// the admin navigates away mid-save. Called from the client's catch paths so a
+// failed upload can't leave orphaned (billable) blobs behind. Best-effort.
+export async function deleteBlobsAction(urls: string[]) {
+  await requireAdmin();
+  if (!urls?.length) return;
+  await Promise.allSettled(
+    urls.map((u) => del(u, { token: env.BLOB_READ_WRITE_TOKEN })),
+  );
 }

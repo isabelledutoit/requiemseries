@@ -386,6 +386,33 @@ a {
   gap: 0.6rem;
 }
 
+/* ── Trash (soft-deleted works, recoverable before auto-purge) ── */
+.art-trash {
+  margin-top: 1.8rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--brown);
+}
+.art-trash-title {
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  color: var(--bone-dim);
+  margin-bottom: 0.35rem;
+}
+.art-trash-hint {
+  font-size: 0.8rem;
+  color: var(--bone-faint);
+  line-height: 1.6;
+  margin-bottom: 0.9rem;
+  max-width: 34rem;
+}
+/* Trashed cards read as inactive until restored. */
+.art-trash-item {
+  opacity: 0.72;
+}
+.art-trash-item .art-thumb {
+  filter: grayscale(0.5);
+}
+
 /* ── Dropzone ── */
 .dropzone {
   display: flex;
