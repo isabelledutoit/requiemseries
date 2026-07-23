@@ -26,15 +26,23 @@ async function attachImages(
   }));
 }
 
-// Public /portfolio — published, not soft-deleted, ordered. Pass limit/offset to
-// page; omit them to fetch every published artwork (default).
+// A work is publicly visible iff it is published, not soft-deleted, AND has at
+// least one image. The image check hides freshly-created drafts (no images yet)
+// and any work whose last image was removed — no manual publish step needed.
+function visiblePublishedWhere() {
+  return and(
+    eq(portfolioArtwork.published, true),
+    isNull(portfolioArtwork.deletedAt),
+    sql`exists (select 1 from ${portfolioImage} where ${portfolioImage.artworkId} = ${portfolioArtwork.id})`,
+  );
+}
+
+// Public /portfolio — visible works, ordered. Pass limit/offset to page; omit
+// them to fetch every visible artwork (default).
 export async function listPublishedArtworks(
   opts: { limit?: number; offset?: number } = {},
 ): Promise<ArtworkWithImages[]> {
-  const where = and(
-    eq(portfolioArtwork.published, true),
-    isNull(portfolioArtwork.deletedAt),
-  );
+  const where = visiblePublishedWhere();
   const arts =
     opts.limit != null
       ? await db
@@ -58,17 +66,12 @@ export async function listPublishedArtworks(
   return attachImages(arts);
 }
 
-// Total published artworks — for computing the number of portfolio pages.
+// Total visible artworks (published + has images) — for the page count.
 export async function countPublishedArtworks(): Promise<number> {
   const [row] = await db
     .select({ c: sql<number>`cast(count(*) as int)` })
     .from(portfolioArtwork)
-    .where(
-      and(
-        eq(portfolioArtwork.published, true),
-        isNull(portfolioArtwork.deletedAt),
-      ),
-    );
+    .where(visiblePublishedWhere());
   return Number(row?.c ?? 0);
 }
 

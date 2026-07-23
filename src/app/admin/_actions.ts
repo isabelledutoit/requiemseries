@@ -30,7 +30,8 @@ export async function createArtworkAction(input: NewArtworkInput) {
   const session = await requireAdmin();
   const title = input.title?.trim();
   if (!title) throw new Error("Title is required.");
-  if (!input.images?.length) throw new Error("Add at least one image.");
+  // Images are optional at creation — a work with none is a private draft that
+  // stays off /portfolio until images are added (see visiblePublishedWhere).
 
   const [{ maxPos }] = await db
     .select({ maxPos: sql<number | null>`max(${portfolioArtwork.position})` })
@@ -49,18 +50,20 @@ export async function createArtworkAction(input: NewArtworkInput) {
     uploadedBy: session.user.id,
   });
 
-  await db.insert(portfolioImage).values(
-    input.images.map((im, idx) => ({
-      id: nanoid(),
-      artworkId: id,
-      imageUrl: im.url,
-      imagePathname: im.pathname,
-      altText: im.alt?.trim() || null,
-      width: im.width ?? null,
-      height: im.height ?? null,
-      position: idx,
-    })),
-  );
+  if (input.images?.length) {
+    await db.insert(portfolioImage).values(
+      input.images.map((im, idx) => ({
+        id: nanoid(),
+        artworkId: id,
+        imageUrl: im.url,
+        imagePathname: im.pathname,
+        altText: im.alt?.trim() || null,
+        width: im.width ?? null,
+        height: im.height ?? null,
+        position: idx,
+      })),
+    );
+  }
 
   revalidatePath("/portfolio");
   revalidatePath("/admin");

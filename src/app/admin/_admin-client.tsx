@@ -100,7 +100,7 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
     e.preventDefault();
     setErr(null);
     if (!title.trim()) return setErr("Title is required.");
-    if (files.length === 0) return setErr("Add at least one image.");
+    // Images are optional — a work with none is saved as a private draft.
     setBusy(true);
     try {
       const images: Awaited<ReturnType<typeof uploadOne>>[] = [];
@@ -162,8 +162,13 @@ export function AdminClient({ artworks }: { artworks: ArtworkRow[] }) {
             <AutoTextarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </label>
           <div className="auth-field">
-            <span>Images *</span>
+            <span>Images</span>
             <Dropzone files={files} onFiles={setFiles} />
+            <p className="art-form-hint">
+              Optional — create the work now and add photos later. It stays a
+              private draft (off your public portfolio) until it has at least one
+              image.
+            </p>
           </div>
           {err && <p className="auth-err">{err}</p>}
           {status && <p className="art-form-note">{status}</p>}
@@ -319,8 +324,16 @@ function WorkCard({ art }: { art: ArtworkRow }) {
         )}
         <div className="art-list-meta">
           <span className="art-list-title">{art.title}</span>
-          <span className="art-list-sub">
-            {art.images.length} image(s){art.published ? "" : " · hidden"}
+          <span
+            className={
+              "art-list-sub" + (art.images.length === 0 ? " is-draft" : "")
+            }
+          >
+            {art.images.length === 0
+              ? "Draft — add images to publish (not on your portfolio yet)"
+              : `${art.images.length} image(s)${
+                  art.published ? "" : " · hidden"
+                }`}
           </span>
         </div>
         <div className="art-card-actions">

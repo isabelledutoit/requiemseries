@@ -299,6 +299,10 @@ a {
   font-size: 0.8rem;
   letter-spacing: 0.06em;
 }
+/* Image-less work: a private draft not yet on the public portfolio. */
+.art-list-sub.is-draft {
+  color: var(--gold);
+}
 .art-card-actions {
   display: flex;
   gap: 0.5rem;
